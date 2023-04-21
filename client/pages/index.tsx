@@ -1,66 +1,51 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { client, publicClient } from "./_app";
-import {
-  GetContractReturnType,
-  WalletClient,
-  formatEther,
-  getContract,
-} from "viem";
+import { Contract, formatEther, BrowserProvider, Signer } from "ethers";
 import farmABI from "../../contracts/out/Farm.sol/Farm.json";
-import type { Abi } from "abitype";
+
+const farmAddress = "0xf5a632Eb07C3D494438fA1C60400668161d6884F";
 
 export default function Home() {
   const [address, setAddress] = useState<`0x${string}`>();
   const [balance, setBalance] = useState(BigInt(0));
-  const [farm, setFarm] =
-    useState<GetContractReturnType<Abi, typeof publicClient, WalletClient>>();
+  const [farm, setFarm] = useState<Contract>();
   const [disabled, setDisabled] = useState(false);
+  const [signer, setSigner] = useState<Signer>();
 
   const connect = async () => {
-    if (!client) return;
     const [a] = await (
       window as unknown as Window & { ethereum: any }
     ).ethereum.request({
       method: "eth_requestAccounts",
     });
     setAddress(a);
+    const provider = new BrowserProvider((window as any).ethereum);
+    setSigner(await provider.getSigner());
+    setFarm(new Contract(farmAddress, farmABI.abi, await provider.getSigner()));
+  };
+
+  const queryBalance = async () => {
+    if (!farm) return;
+    const balance = await farm.balanceOf(address);
+    console.log(balance);
+    setBalance(BigInt(balance as bigint));
   };
 
   useEffect(() => {
-    if (!address || !client) return;
-    client.account = {
-      address,
-      type: "json-rpc",
-    };
-    const interv = setInterval(async () => {
-      if (!farm) return;
-      const balance = await farm.read.balanceOf([address]);
-      setBalance(BigInt(balance as bigint));
-    }, 5000);
+    if (!address) return;
+    queryBalance();
+    const interv = setInterval(queryBalance, 5000);
 
     return () => {
       clearInterval(interv);
     };
   }, [address, farm]);
 
-  useEffect(() => {
-    if (!client || !publicClient) return;
-    setFarm(
-      getContract({
-        abi: farmABI.abi,
-        address: "0xf5a632Eb07C3D494438fA1C60400668161d6884F",
-        walletClient: client,
-        publicClient,
-      }) as any
-    );
-  }, []);
-
   const harvest = async () => {
     if (!address || !farm) return;
     setDisabled(true);
-    const tx = await farm.write.harvest();
-    await publicClient.waitForTransactionReceipt({ hash: tx });
+    const tx = await farm.harvest();
+    await signer?.provider?.waitForTransaction(tx.hash);
     setDisabled(false);
   };
 
