@@ -1,9 +1,19 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Contract, formatEther, BrowserProvider, Signer } from "ethers";
+import {
+  Contract,
+  formatEther,
+  BrowserProvider,
+  Signer,
+  VoidSigner,
+  parseEther,
+  hexlify,
+} from "ethers";
 import farmABI from "../../contracts/out/Farm.sol/Farm.json";
+import { Account, Permission, PermissionSet } from "@/sdk/src";
+import { EntryPoint__factory } from "@/sdk/src/permissive/types";
 
-const farmAddress = "0xf5a632Eb07C3D494438fA1C60400668161d6884F";
+export const farmAddress = "0xf5a632Eb07C3D494438fA1C60400668161d6884F";
 
 export default function Home() {
   const [address, setAddress] = useState<`0x${string}`>();
@@ -11,6 +21,7 @@ export default function Home() {
   const [farm, setFarm] = useState<Contract>();
   const [disabled, setDisabled] = useState(false);
   const [signer, setSigner] = useState<Signer>();
+  const [allowed, setAllowed] = useState(false);
 
   const connect = async () => {
     const [a] = await (
@@ -31,9 +42,30 @@ export default function Home() {
     setBalance(BigInt(balance as bigint));
   };
 
+  const queryAllowed = async () => {
+    if (!signer || !farm) return;
+    const chainId = (await signer.provider?.getNetwork())?.chainId;
+    if (!chainId || chainId != BigInt(80001)) return;
+    const account = new Account({
+      operator: new VoidSigner(
+        process.env.NEXT_PUBLIC_OPERATOR as string,
+        signer.provider
+      ),
+      owner: signer,
+      chainId: Number(chainId) as 80001,
+    });
+    await account.getAccount();
+    const root = window.localStorage.getItem("root");
+    setAllowed(
+      (await account.allowedPermission()) === root &&
+        Number(window.localStorage.getItem("expiration")) > Date.now()
+    );
+  };
+
   useEffect(() => {
     if (!address) return;
     queryBalance();
+    queryAllowed();
     const interv = setInterval(queryBalance, 5000);
 
     return () => {
@@ -46,6 +78,55 @@ export default function Home() {
     setDisabled(true);
     const tx = await farm.harvest();
     await signer?.provider?.waitForTransaction(tx.hash);
+    setDisabled(false);
+  };
+
+  const harvestWithPermissive = async () => {
+    if (!signer || !farm) return;
+    setDisabled(true);
+    const chainId = (await signer.provider?.getNetwork())?.chainId;
+    if (!chainId || chainId != BigInt(80001)) return;
+    const account = new Account({
+      operator: new VoidSigner(
+        process.env.NEXT_PUBLIC_OPERATOR as string,
+        signer.provider
+      ),
+      owner: signer,
+      chainId: Number(chainId) as 80001,
+    });
+    await account.getAccount();
+    if (!(await account.isDeployed())) {
+      await account.deploy();
+    }
+    const permSet = new PermissionSet({
+      title: "Farm game harvest",
+      maxFee: parseEther("1"),
+      maxValue: 0,
+      permissions: [
+        new Permission({
+          operator: process.env.NEXT_PUBLIC_OPERATOR as string,
+          to: await farm.getAddress(),
+          selector: farm.interface.getFunction("harvest")?.selector as string,
+          allowed_arguments: hexlify(new Uint8Array()),
+          expiresAtUnix: new Date(Date.now() + 1000 * 3600 * 1),
+        }),
+      ],
+    });
+    window.localStorage.setItem("root", permSet.hash().toString());
+    window.localStorage.setItem(
+      "expiration",
+      new Date(Date.now() + 1000 * 3600 * 1).getTime().toString()
+    );
+    await permSet.upload();
+    // in normal conditions redirect to authorization page
+    await account.setOperatorPermissions(permSet);
+    const entryPoint = EntryPoint__factory.connect(
+      "0x0576a174d229e3cfa37253523e645a78a0c91b57",
+      signer
+    );
+    await entryPoint.depositTo(await account.getAddress(), {
+      value: parseEther("0.01"),
+    });
     setDisabled(false);
   };
 
@@ -64,15 +145,30 @@ export default function Home() {
                 <h3>{formatEther(balance)} WHEAT</h3>
               </div>
             </div>
-            <button
-              className={`${
-                disabled ? "bg-slate-400" : "bg-blue-500"
-              } font-semibold text-lg px-4 py-2 rounded-lg`}
-              onClick={harvest}
-              disabled={disabled}
-            >
-              Harvest
-            </button>
+            {!allowed ? (
+              <>
+                <button
+                  className={`${
+                    disabled ? "bg-slate-400" : "bg-blue-500"
+                  } font-semibold text-lg px-4 py-2 rounded-lg`}
+                  onClick={harvest}
+                  disabled={disabled}
+                >
+                  Harvest
+                </button>
+                <button
+                  className={`${
+                    disabled ? "bg-slate-400" : "bg-pink-500"
+                  } font-semibold text-lg px-4 py-2 rounded-lg`}
+                  onClick={harvestWithPermissive}
+                  disabled={disabled}
+                >
+                  Harvest with Permissive
+                </button>
+              </>
+            ) : (
+              <h2>Permissive harvest enabled, will happen every 10 minutes</h2>
+            )}
           </>
         ) : (
           <button
