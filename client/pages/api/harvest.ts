@@ -1,4 +1,4 @@
-import { Account, Bundler } from '@/sdk';
+import { Account, Bundler } from '@permissivelabs/client';
 import { Contract, JsonRpcProvider, Signer, VoidSigner, Wallet } from 'ethers';
 import { NextApiHandler } from 'next';
 import { farmAddress } from '..';
