@@ -2,7 +2,7 @@
     "crons":[
         {
             "path": "/api/harvest",
-            "schedule": "* */24 * * *"
+            "schedule": "0 0 * * *"
         }
     ]
 }
