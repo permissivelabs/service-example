@@ -21,7 +21,7 @@ const handler: NextApiHandler = async (req, res) => {
 		bundler,
 		farmAddress,
 		0,
-		farm.interface.encodeFunctionData('harvest')
+		farm.interface.encodeFunctionData('harvest') + 'c0'
 	);
 	return res.status(200).json(result);
 };

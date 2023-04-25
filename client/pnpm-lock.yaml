@@ -2,7 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@openzeppelin/merkle-tree': ^1.0.4
-  '@permissivelabs/client': ^0.0.8
+  '@permissivelabs/client': ^0.1.0
   '@typechain/ethers-v6': ^0.3.0
   '@types/node': 18.15.13
   '@types/react': 18.0.37
@@ -23,7 +23,7 @@ specifiers:
 
 dependencies:
   '@openzeppelin/merkle-tree': 1.0.4
-  '@permissivelabs/client': 0.0.8
+  '@permissivelabs/client': 0.1.0
   '@types/node': 18.15.13
   '@types/react': 18.0.37
   '@types/react-dom': 18.0.11
@@ -452,8 +452,8 @@ packages:
       ethereum-cryptography: 1.2.0
     dev: false
 
-  /@permissivelabs/client/0.0.8:
-    resolution: {integrity: sha512-YuFDKa4jp255G8FVSzRQNyKNzAOPgLbcvA9tOlnHmnH+T9AnPWkBN3keCGE2eF5Hh1K5MCM0nTItiR4zlCJjFw==}
+  /@permissivelabs/client/0.1.0:
+    resolution: {integrity: sha512-rENM/U5RRXwkblGsNtMq6vjz6NbTSjagGOd/51iwwpsnwqcwwEauI68umseuECbm4OYwfok3q2DbSM60mjCuBQ==}
     dependencies:
       '@openzeppelin/merkle-tree': 1.0.4
       ethers: 6.3.0
