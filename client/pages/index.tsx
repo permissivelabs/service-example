@@ -8,7 +8,7 @@ import {
 	VoidSigner,
 	parseEther,
 } from 'ethers';
-import farmABI from '../../contracts/out/Farm.sol/Farm.json';
+import farmABI from '../abis/Farm.json';
 import { Account, Permission, PermissionSet } from '@permissivelabs/client';
 import { EntryPoint__factory } from '@permissivelabs/client';
 

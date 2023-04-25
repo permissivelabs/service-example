@@ -2,7 +2,7 @@ import { Account, Bundler } from '@permissivelabs/client';
 import { Contract, JsonRpcProvider, Signer, VoidSigner, Wallet } from 'ethers';
 import { NextApiHandler } from 'next';
 import { farmAddress } from '..';
-import farmABI from '../../../contracts/out/Farm.sol/Farm.json';
+import farmABI from '../../abis/Farm.json';
 
 const handler: NextApiHandler = async (req, res) => {
 	const provider = new JsonRpcProvider(
