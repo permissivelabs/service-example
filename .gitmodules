@@ -1,6 +1,3 @@
 [submodule "contracts/lib/openzeppelin-contracts"]
 	path = contracts/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
-[submodule "client/sdk"]
-	path = client/sdk
-	url = git@github.com:permissivelabs/sdk

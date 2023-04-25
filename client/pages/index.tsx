@@ -9,8 +9,8 @@ import {
 	parseEther,
 } from 'ethers';
 import farmABI from '../../contracts/out/Farm.sol/Farm.json';
-import { Account, Permission, PermissionSet } from '@/sdk/src';
-import { EntryPoint__factory } from '@/sdk/src/permissive/types';
+import { Account, Permission, PermissionSet } from '@/sdk';
+import { EntryPoint__factory } from '@/sdk';
 
 export const farmAddress = '0x49DB006667B532f8e49Af5978faA6550C5E51DAb';
 

@@ -1,4 +1,4 @@
-import { Account, Bundler, PermissionSet } from '@/sdk/src';
+import { Account, Bundler } from '@/sdk';
 import { Contract, JsonRpcProvider, Signer, VoidSigner, Wallet } from 'ethers';
 import { NextApiHandler } from 'next';
 import { farmAddress } from '..';
