@@ -1,16 +1,10 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import {
-	Contract,
-	formatEther,
-	BrowserProvider,
-	Signer,
-	VoidSigner,
-	parseEther,
-} from 'ethers';
+import { Contract, Signer, VoidSigner, providers } from 'ethers';
 import farmABI from '../abis/Farm.json';
 import { Account, Permission, PermissionSet } from '@permissivelabs/client';
 import { EntryPoint__factory } from '@permissivelabs/client';
+import { formatEther, parseEther } from 'ethers/lib/utils';
 
 export const farmAddress = '0x49DB006667B532f8e49Af5978faA6550C5E51DAb';
 
@@ -30,7 +24,7 @@ export default function Home() {
 		});
 		if (a.toLowerCase() != process.env.NEXT_PUBLIC_OWNER?.toLowerCase()) return;
 		setAddress(a);
-		const provider = new BrowserProvider((window as any).ethereum);
+		const provider = new providers.Web3Provider((window as any).ethereum);
 		setSigner(await provider.getSigner());
 		setFarm(new Contract(farmAddress, farmABI.abi, await provider.getSigner()));
 	};
@@ -52,7 +46,7 @@ export default function Home() {
 	const queryAllowed = async () => {
 		if (!signer || !farm) return;
 		const chainId = (await signer.provider?.getNetwork())?.chainId;
-		if (!chainId || chainId != BigInt(80001)) return;
+		if (!chainId || chainId != 80001) return;
 		const account = new Account({
 			operator: new VoidSigner(
 				process.env.NEXT_PUBLIC_OPERATOR as string,
@@ -85,7 +79,7 @@ export default function Home() {
 		if (!signer || !farm) return;
 		setDisabled(true);
 		const chainId = (await signer.provider?.getNetwork())?.chainId;
-		if (!chainId || chainId != BigInt(80001)) return;
+		if (!chainId || chainId != 80001) return;
 		const account = new Account({
 			operator: new VoidSigner(
 				process.env.NEXT_PUBLIC_OPERATOR as string,
@@ -106,8 +100,8 @@ export default function Home() {
 			permissions: [
 				new Permission({
 					operator: process.env.NEXT_PUBLIC_OPERATOR as string,
-					to: await farm.getAddress(),
-					selector: farm.interface.getFunction('harvest')?.selector as string,
+					to: farm.address,
+					selector: farm.interface.getSighash('harvest'),
 					allowed_arguments: '0xc0',
 					expiresAtUnix: new Date(1813986312 * 1000),
 					maxUsage: 11,
@@ -122,11 +116,8 @@ export default function Home() {
 		await permSet.upload();
 		// in normal conditions redirect to authorization page
 		await account.setOperatorPermissions(permSet);
-		const entryPoint = EntryPoint__factory.connect(
-			'0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789',
-			signer
-		);
-		await entryPoint.depositTo(await account.getAddress(), {
+		await signer.sendTransaction({
+			to: await account.getAddress(),
 			value: parseEther('0.01'),
 		});
 		setDisabled(false);

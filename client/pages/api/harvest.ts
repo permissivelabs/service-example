@@ -1,11 +1,11 @@
 import { Account, Bundler } from '@permissivelabs/client';
-import { Contract, JsonRpcProvider, Signer, VoidSigner, Wallet } from 'ethers';
+import { Contract, Signer, VoidSigner, Wallet, providers } from 'ethers';
 import { NextApiHandler } from 'next';
 import { farmAddress } from '..';
 import farmABI from '../../abis/Farm.json';
 
 const handler: NextApiHandler = async (req, res) => {
-	const provider = new JsonRpcProvider(
+	const provider = new providers.JsonRpcProvider(
 		'https://polygon-testnet.public.blastapi.io'
 	);
 	const operator = new Wallet(process.env.OPERATOR_KEY as string, provider);
